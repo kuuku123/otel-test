@@ -12,26 +12,32 @@ processors:
     send_batch_size: 10
 
 exporters:
-  # Print detailed telemetry to the Collector console logs
+  # Debug: Output detailed telemetry to collector console logs
   debug:
     verbosity: detailed
 
-  # Send traces to Jaeger UI
-  otlp/jaeger:
-    endpoint: jaeger:4317
+  # Traces -> Send to Grafana Tempo via OTLP gRPC
+  otlp/tempo:
+    endpoint: tempo:4317
     tls:
       insecure: true
 
-  # Expose metrics endpoint for Prometheus scraping
+  # Metrics -> Expose for Prometheus to scrape
   prometheus:
     endpoint: 0.0.0.0:8889
+
+  # Logs -> Send to Grafana Loki via OTLP HTTP
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug, otlp/jaeger]
+      exporters: [debug, otlp/tempo]
 
     metrics:
       receivers: [otlp]
@@ -41,4 +47,4 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug]
+      exporters: [debug, otlphttp/loki]

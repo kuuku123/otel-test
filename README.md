@@ -70,21 +70,29 @@ opentelemetry-test/
 mvn compile exec:java
 ```
 
-### 2. Send Data to OpenTelemetry Collector + Jaeger UI:
-You can start a local OpenTelemetry Collector & Jaeger with Docker Compose:
+### 2. Full Observability Stack (OTel Collector + Grafana + Prometheus + Tempo + Loki):
+Start the entire local observability platform with Docker Compose:
 
 ```bash
-# Start Collector and Jaeger
+# 1. Start OTel Collector, Grafana, Tempo, Prometheus, and Loki
 docker compose up -d
 
-# Run Java application pointing to OTel Collector HTTP endpoint (port 4318)
+# 2. Run the Java application sending data via OTLP (port 4318)
 mvn compile exec:java -Dotel.exporter.otlp.endpoint=http://localhost:4318
 
-# Open Jaeger Web UI in your browser
-# URL: http://localhost:16686
+# 3. Open Grafana in your browser (No login required)
+# URL: http://localhost:3000
 ```
 
-### 3. Run an individual scenario:
+#### Where to Find Data in Grafana (`http://localhost:3000`):
+* **Explore Traces (Tempo)**: Go to **Explore** -> Select datasource **Tempo** -> Search for service `opentelemetry-study-app` to view waterfall trace graphs.
+* **Explore Metrics (Prometheus)**: Go to **Explore** -> Select datasource **Prometheus** -> Query metrics like `orders_processed_total` or `active_shopping_carts` or `checkout_duration_milliseconds_count`.
+* **Explore Logs (Loki)**: Go to **Explore** -> Select datasource **Loki** -> Query `{service_name="opentelemetry-study-app"}` to inspect structured logs correlated to traces.
+
+#### 4. Stop the Observability Stack:
+```bash
+docker compose down
+```
 Pass the scenario number as an argument:
 ```bash
 mvn compile exec:java -Dexec.args="1"   # Scenario 1: Tracing Fundamentals
