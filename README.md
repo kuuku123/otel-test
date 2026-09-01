@@ -65,12 +65,26 @@ opentelemetry-test/
 
 ## 🚀 How to Run and Test
 
-### 1. Run all scenarios:
+### 1. Run all scenarios (Console output):
 ```bash
 mvn compile exec:java
 ```
 
-### 2. Run an individual scenario:
+### 2. Send Data to OpenTelemetry Collector + Jaeger UI:
+You can start a local OpenTelemetry Collector & Jaeger with Docker Compose:
+
+```bash
+# Start Collector and Jaeger
+docker compose up -d
+
+# Run Java application pointing to OTel Collector HTTP endpoint (port 4318)
+mvn compile exec:java -Dotel.exporter.otlp.endpoint=http://localhost:4318
+
+# Open Jaeger Web UI in your browser
+# URL: http://localhost:16686
+```
+
+### 3. Run an individual scenario:
 Pass the scenario number as an argument:
 ```bash
 mvn compile exec:java -Dexec.args="1"   # Scenario 1: Tracing Fundamentals
@@ -80,7 +94,7 @@ mvn compile exec:java -Dexec.args="4"   # Scenario 4: Logs & Trace Correlation
 mvn compile exec:java -Dexec.args="5"   # Scenario 5: Async & Multithreading
 ```
 
-### 3. Run automated unit tests:
+### 4. Run automated unit tests:
 ```bash
 mvn test
 ```

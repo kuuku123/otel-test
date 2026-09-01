@@ -1,0 +1,25 @@
+services:
+  # OpenTelemetry Collector (Receives data from Java SDK via OTLP and exports to Jaeger / Logs)
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.114.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8889:8889"   # Prometheus metrics exporter
+      - "13133:13133" # Health check
+    depends_on:
+      - jaeger
+
+  # Jaeger All-in-One (Visual UI for distributed traces)
+  jaeger:
+    image: jaegertracing/all-in-one:1.63.0
+    container_name: jaeger
+    ports:
+      - "16686:16686" # Web UI: http://localhost:16686
+      - "4317"        # OTLP gRPC receiver inside docker network
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
