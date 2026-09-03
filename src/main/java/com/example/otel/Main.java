@@ -32,12 +32,13 @@ public class Main {
             AsyncTracingDemo asyncTracingDemo = new AsyncTracingDemo(otelConfig.getTracer("com.example.otel.async"));
 
             if (args.length > 0) {
-                switch (args[0].trim()) {
+                switch (args[0].trim().toLowerCase()) {
                     case "1" -> tracingDemo.run();
                     case "2" -> metricsDemo.run();
                     case "3" -> contextPropagationDemo.run();
                     case "4" -> logsDemo.run();
                     case "5" -> asyncTracingDemo.run();
+                    case "loop", "traffic" -> metricsDemo.simulateContinuousTraffic(30, 1000);
                     default -> runAllDemos(tracingDemo, metricsDemo, contextPropagationDemo, logsDemo, asyncTracingDemo);
                 }
             } else {
@@ -54,7 +55,7 @@ public class Main {
                                    ContextPropagationDemo contextPropagationDemo,
                                    LogsCorrelationDemo logsDemo,
                                    AsyncTracingDemo asyncTracingDemo) {
-        // Run all 5 comprehensive demos
+        // Run all comprehensive demos
         tracingDemo.run();
         pause(400);
 

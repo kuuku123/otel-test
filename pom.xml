@@ -59,6 +59,13 @@
             <version>1.28.0-alpha</version>
         </dependency>
 
+        <!-- OpenTelemetry Instrumentation Annotations (@WithSpan, @SpanAttribute) -->
+        <dependency>
+            <groupId>io.opentelemetry.instrumentation</groupId>
+            <artifactId>opentelemetry-instrumentation-annotations</artifactId>
+            <version>2.10.0</version>
+        </dependency>
+
         <!-- Testing Support -->
         <dependency>
             <groupId>io.opentelemetry</groupId>
