@@ -10,6 +10,13 @@
 /home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/demos/ContextPropagationDemo.java
 /home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/demos/LogsCorrelationDemo.java
 /home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/demos/MetricsDemo.java
+/home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/jmxdemos/AppMetrics.java
+/home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/jmxdemos/AppMetricsMBean.java
+/home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/jmxdemos/ConnectionPool.java
+/home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/jmxdemos/ConnectionPoolMXBean.java
+/home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/jmxdemos/JmxMain.java
+/home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/jmxdemos/JmxServerManager.java
+/home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/jmxdemos/JmxTrafficSimulator.java
 /home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/util/ConsoleFormatter.java
 /home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/util/PrettyLogRecordExporter.java
 /home/tony/workspace/study/monitor/otel-test/src/main/java/com/example/otel/util/PrettyMetricExporter.java

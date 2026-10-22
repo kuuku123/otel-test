@@ -40,25 +40,46 @@ OpenTelemetry (OTel) is a vendor-neutral, open-source observability framework pr
 ```
 opentelemetry-test/
 ├── pom.xml                                      # OpenTelemetry BOM & dependencies
+├── docker-compose.yml                           # OTel Collector + Prometheus + Grafana stack
+├── otel-collector-config.yaml                   # Collector pipeline configuration
+├── jmx-scraper-config.yaml                      # OpenTelemetry JMX Scraper mapping rules
+├── run-agent-demo.sh                            # Java Agent runner script
+├── run-jmx-demo.sh                              # JMX MBean Server application runner
+├── run-jmx-scraper.sh                           # OpenTelemetry JMX Scraper runner
 ├── README.md                                    # This study guide
 └── src/
     ├── main/java/com/example/otel/
-    │   ├── Main.java                            # Main demo runner & CLI menu
+    │   ├── Main.java                            # Pure Java SDK runner
     │   ├── config/
     │   │   └── OpenTelemetryConfig.java         # Programmatic pure Java SDK setup
-    │   ├── demos/
+    │   ├── demos/                               # Pure Java OpenTelemetry SDK Demos
     │   │   ├── BasicTracingDemo.java            # Spans, parent-child, attributes, events, errors
     │   │   ├── MetricsDemo.java                 # Counters, UpDownCounters, Histograms, Gauges
     │   │   ├── ContextPropagationDemo.java      # W3C TraceContext & Baggage across boundaries
     │   │   ├── LogsCorrelationDemo.java         # LogRecords with Trace/Span ID correlation
     │   │   └── AsyncTracingDemo.java            # Multithreading & CompletableFuture context
+    │   ├── agentdemos/                          # OpenTelemetry Java Agent Demos (-javaagent)
+    │   │   ├── AgentMain.java                   # Java Agent runner
+    │   │   ├── AgentTracingDemo.java            # @WithSpan & @SpanAttribute annotations
+    │   │   ├── AgentAsyncDemo.java              # Auto context propagation across async threads
+    │   │   ├── AgentContextPropagationDemo.java # Automatic HTTP client/server W3C injection
+    │   │   └── AgentMetricsDemo.java            # Automatic JVM/System metrics & GlobalOpenTelemetry
+    │   ├── jmxdemos/                            # JMX MBean & Remote Scraping Demos
+    │   │   ├── JmxMain.java                     # JMX demo runner & live attribute monitor
+    │   │   ├── AppMetricsMBean.java             # Standard MBean interface
+    │   │   ├── AppMetrics.java                  # Standard MBean implementation
+    │   │   ├── ConnectionPoolMXBean.java        # MXBean interface (Open MBean types)
+    │   │   ├── ConnectionPool.java              # Connection pool MXBean implementation
+    │   │   ├── JmxServerManager.java            # MBeanServer registration & JMX Remote RMI (port 9999)
+    │   │   └── JmxTrafficSimulator.java         # Real-time background traffic generator
     │   └── util/
     │       ├── ConsoleFormatter.java            # Terminal styling & formatting utilities
     │       ├── PrettySpanExporter.java          # Custom exporter for clear span visualization
     │       ├── PrettyMetricExporter.java        # Custom exporter for metric batches
     │       └── PrettyLogRecordExporter.java     # Custom exporter for log correlation
     └── test/java/com/example/otel/
-        └── OpenTelemetryTest.java               # Unit tests using InMemory exporters
+        ├── OpenTelemetryTest.java               # Unit tests for OpenTelemetry SDK
+        └── JmxMBeanTest.java                    # Unit tests for JMX MBean / MBeanServer
 ```
 
 ---
@@ -102,7 +123,25 @@ mvn compile exec:java -Dexec.args="4"   # Scenario 4: Logs & Trace Correlation
 mvn compile exec:java -Dexec.args="5"   # Scenario 5: Async & Multithreading
 ```
 
-### 4. Run automated unit tests:
+### 3. Run OpenTelemetry Java Agent Demo:
+```bash
+./run-agent-demo.sh
+```
+
+### 4. Run JMX MBeans Demo & OpenTelemetry Collector Scraping:
+```bash
+# Terminal 1: Launch Java application exposing MBeans on JMX port 9999
+./run-jmx-demo.sh
+
+# Terminal 2: Launch OpenTelemetry JMX Scraper (scrapes JMX :9999 -> sends OTLP to Collector :4317)
+./run-jmx-scraper.sh
+
+# Terminal 3 (or browser): Inspect metrics received by Collector & Prometheus
+curl -s http://localhost:8889/metrics | grep jmx_
+curl -s "http://localhost:9090/api/v1/query?query=jmx_orders_processed_total"
+```
+
+### 5. Run automated unit tests:
 ```bash
 mvn test
 ```
@@ -230,6 +269,70 @@ List<SpanData> spans = spanExporter.getFinishedSpanItems();
 assertThat(spans).hasSize(1);
 assertThat(spans.get(0).getName()).isEqualTo("checkout-order");
 ```
+
+---
+
+### 7. JMX MBeans & OpenTelemetry Collector Scraping (`jmxdemos/`)
+
+Java Management Extensions (JMX) is Java's built-in standard for application management and monitoring:
+* **Standard MBean (`AppMetricsMBean.java`)**: Exposes strongly typed getters/setters and operations (`processOrder`, `resetStatistics`).
+* **MXBean (`ConnectionPoolMXBean.java`)**: An Open MBean that maps custom data types into universal Open Type equivalents without requiring clients to have application domain classes.
+* **Platform MBeanServer (`ManagementFactory.getPlatformMBeanServer()`)**: The central registry where MBeans are registered under unique `ObjectName` identifiers (`com.example.otel:type=AppMetrics,name=OrderService`).
+* **JMX Remote RMI Connector**: Enables remote clients (like the OpenTelemetry JMX Scraper) to connect via `service:jmx:rmi:///jndi/rmi://localhost:9999/jmxrmi`.
+
+#### How OpenTelemetry Scrapes JMX MBeans:
+```
+┌───────────────────────────┐         ┌───────────────────────────────┐
+│     Java Application      │         │   OpenTelemetry JMX Scraper   │
+│  ┌─────────────────────┐  │         │  (opentelemetry-jmx-scraper)  │
+│  │ Platform MBeanServer│  │  JMX    │                               │
+│  │  • AppMetrics       │◄─┼─────────┼─► Reads MBeans via RMI        │
+│  │  • ConnectionPool   │  │  (:9999)│   Maps via scraper YAML config│
+│  └─────────────────────┘  │         │   Generates OTel Metric Types │
+└───────────────────────────┘         └──────────────┬────────────────┘
+                                                     │ OTLP gRPC (:4317)
+                                                     ▼
+┌───────────────────────────┐         ┌───────────────────────────────┐
+│     Grafana Dashboards    │         │    OpenTelemetry Collector    │
+│  • jmx_orders_processed   │◄────────┼── Exposes Prometheus (:8889)  │
+│  • jmx_connections_active │ (pull)  │   Forward to Prometheus (:9090│
+└───────────────────────────┘         └───────────────────────────────┘
+```
+
+#### Declarative JMX Mapping Configuration (`jmx-scraper-config.yaml`):
+```yaml
+rules:
+  - bean: "com.example.otel:type=AppMetrics,name=*"
+    mapping:
+      ProcessedOrdersCount:
+        metric: jmx.orders.processed.total
+        desc: "Total number of completed orders exposed via MBean"
+        type: counter
+        unit: "1"
+      ActiveConnections:
+        metric: jmx.connections.active
+        desc: "Active client connections exposed via MBean"
+        type: updowncounter
+        unit: "1"
+      PendingQueueDepth:
+        metric: jmx.queue.depth
+        desc: "Pending work queue depth exposed via MBean"
+        type: gauge
+        unit: "1"
+      AverageResponseTimeMs:
+        metric: jmx.orders.latency
+        desc: "Moving average response latency in milliseconds"
+        type: gauge
+        unit: "ms"
+```
+
+#### Metrics Available in Prometheus & Grafana:
+* `jmx_orders_processed_total`: Cumulative counter of processed orders
+* `jmx_connections_active`: Live in-flight client connections (gauge)
+* `jmx_queue_depth_ratio`: Current backlog work queue depth (gauge)
+* `jmx_orders_latency_milliseconds`: Running average latency (gauge)
+* `jmx_db_pool_active`: Active database connections in use (gauge)
+* `jmx_db_pool_acquired_total`: Cumulative database connections acquired (counter)
 
 ---
 

@@ -89,9 +89,34 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <configuration>
+                            <mainClass>com.example.otel.Main</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>jmx</id>
+                        <configuration>
+                            <mainClass>com.example.otel.jmxdemos.JmxMain</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>agent</id>
+                        <configuration>
+                            <mainClass>com.example.otel.agentdemos.AgentMain</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
                 <configuration>
                     <mainClass>com.example.otel.Main</mainClass>
                 </configuration>

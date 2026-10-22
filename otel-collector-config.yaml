@@ -1,10 +1,21 @@
 receivers:
+  # OTLP Receiver: Accepts traces, metrics, and logs via gRPC and HTTP
+  # Used by Pure SDK, Java Agent, and OpenTelemetry JMX Scraper (port 4318)
   otlp:
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+
+  # Optional Reference: OpenTelemetry Collector Contrib JMX Receiver (Deprecated upstream)
+  # NOTE: To use this directly inside the collector, the collector container must have a JRE installed.
+  # The modern standard recommended by OpenTelemetry is using opentelemetry-jmx-scraper to send OTLP to :4318 above.
+  # jmx:
+  #   jar_path: /opt/opentelemetry-jmx-metrics.jar
+  #   endpoint: host.docker.internal:9999
+  #   target_system: jvm
+  #   collection_interval: 5s
 
 processors:
   batch:

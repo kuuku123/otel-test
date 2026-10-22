@@ -1,0 +1,52 @@
+# OpenTelemetry JMX Scraper Configuration
+# Maps JMX MBeans and Attributes to OpenTelemetry Metric Instruments
+# Documentation: https://github.com/open-telemetry/opentelemetry-java-contrib/tree/main/jmx-scraper
+
+rules:
+  # 1. Custom Application Metrics MBean
+  - bean: "com.example.otel:type=AppMetrics,name=*"
+    mapping:
+      ProcessedOrdersCount:
+        metric: jmx.orders.processed.total
+        desc: "Total number of completed orders exposed via MBean"
+        type: counter
+        unit: "1"
+      ActiveConnections:
+        metric: jmx.connections.active
+        desc: "Active client connections exposed via MBean"
+        type: updowncounter
+        unit: "1"
+      PendingQueueDepth:
+        metric: jmx.queue.depth
+        desc: "Pending work queue depth exposed via MBean"
+        type: gauge
+        unit: "1"
+      AverageResponseTimeMs:
+        metric: jmx.orders.latency
+        desc: "Moving average response latency in milliseconds"
+        type: gauge
+        unit: "ms"
+
+  # 2. Database Connection Pool MXBean
+  - bean: "com.example.otel:type=ConnectionPool,name=*"
+    mapping:
+      ActiveConnections:
+        metric: jmx.db.pool.active
+        desc: "Active database connections checked out of the pool"
+        type: gauge
+        unit: "{connection}"
+      IdleConnections:
+        metric: jmx.db.pool.idle
+        desc: "Idle database connections waiting in the pool"
+        type: gauge
+        unit: "{connection}"
+      MaxPoolSize:
+        metric: jmx.db.pool.max
+        desc: "Configured maximum capacity of the connection pool"
+        type: gauge
+        unit: "{connection}"
+      TotalAcquiredCount:
+        metric: jmx.db.pool.acquired.total
+        desc: "Cumulative count of database connections acquired"
+        type: counter
+        unit: "1"
